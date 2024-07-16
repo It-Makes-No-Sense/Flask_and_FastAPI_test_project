@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}{{title}}{% endblock %}
+
+{% block body %}
+{% for jeans in jeans_list %}
+    <div class="card" style="width: 38rem;">
+        <div class="card-body">
+            <h4 class="card-title">{{jeans['model']}}</h4>
+            <p class="card-text">Размер: {{jeans['size']}}</p>
+            <p class="card-text">Цена: {{jeans['price']}} рублей</p> 
+        </div>
+    </div>
+    {%endfor%}
+{% endblock %}
