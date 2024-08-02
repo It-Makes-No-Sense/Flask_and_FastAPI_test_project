@@ -1,47 +1,91 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import RedirectResponse
-from schema import users, items, orders, database
-from models import Item, User, Order, ItemIn, UserIn, OrderIn
-from typing import List
+from sqlalchemy.orm import Session
+import database
+import crud
+import models
 
 app = FastAPI()
 
 
-@app.get("/", response_class=RedirectResponse, status_code=302)
+# Создание подключения к базе данных при запуске приложения
+@app.on_event("startup")
+async def startup():
+    database.Base.metadata.create_all(bind=database.engine)
+
+
+# Функция для получения сессии базы данных
+def get_db():
+    db = database.SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+@app.get('/', response_class=RedirectResponse, status_code=302)
 async def root():
     return '/docs'
 
 
-@app.get('/users', response_model=List[User])
-async def get_users():
-    query = users.select()
-    return await database.fetch_all(query)
+# CRUD операции для пользователей
+@app.post("/users/")
+async def create_user(user: models.UserCreate, db: Session = Depends(get_db)):
+    return crud.create_user(db, user)
 
 
-@app.get('/user/{id}', response_model=User)
-async def get_user(user_id: int):
-    query = users.select().where(users.c.id == user_id)
-    return await database.fetch_one(query)
+@app.get("/users")
+async def users(db: Session = Depends(get_db)):
+    user_list = crud.get_users(db)
+    return user_list
 
 
-@app.post('/user', response_model=UserIn)
-async def create_user(user: UserIn):
-    query = users.insert().values(
-        **user.dict()
-    )
-    last_record_id = await database.execute(query)
-    return {**user.dict(), "id": last_record_id}
+@app.get("/users/{user_id}/")
+async def read_user(user_id: int, db: Session = Depends(get_db)):
+    user = crud.get_user(db, user_id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
 
 
-@app.put('/user/{id}', response_model=User)
-async def update_user(user_id: int, new_user: UserIn):
-    query = users.update().where(users.c.id == user_id).values(**new_user.dict())
-    await database.execute(query)
-    return {**new_user.dict(), "id": user_id}
+@app.delete("/users/{user_id}/")
+async def delete_user(user_id: int, db: Session = Depends(get_db)):
+    return crud.delete_user(db, user_id)
 
 
-@app.delete('/user/{id}')
-async def delete_user(user_id: int):
-    query = users.delete().where(users.c.id == user_id)
-    await database.execute(query)
-    return {'message': f"User {user_id} deleted"}
+# CRUD операции для товаров
+@app.post("/items/")
+async def create_item(item: models.ItemCreate, db: Session = Depends(get_db)):
+    return crud.create_item(db, item)
+
+
+@app.get("/items/{item_id}/")
+async def read_item(item_id: int, db: Session = Depends(get_db)):
+    item = crud.get_item(db, item_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return item
+
+
+@app.delete("/items/{item_id}/")
+async def delete_item(item_id: int, db: Session = Depends(get_db)):
+    return crud.delete_item(db, item_id)
+
+
+# CRUD операции для заказов
+@app.post("/orders/")
+async def create_order(order: models.OrderCreate, db: Session = Depends(get_db)):
+    return crud.create_order(db, order)
+
+
+@app.get("/orders/{order_id}/")
+async def read_order(order_id: int, db: Session = Depends(get_db)):
+    order = crud.get_order(db, order_id)
+    if order is None:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return order
+
+
+@app.delete("/orders/{order_id}/")
+async def delete_order(order_id: int, db: Session = Depends(get_db)):
+    return crud.delete_order(db, order_id)
