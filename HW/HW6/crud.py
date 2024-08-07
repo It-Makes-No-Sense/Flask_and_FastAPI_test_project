@@ -83,8 +83,8 @@ def delete_order(db: Session, order_id: int):
 
 
 def update_order(db: Session, order: OrderUpdate):
-    order = db.query(Order).filter(Order.id == order.order_id).first()
-    if order:
+    res = db.query(Order).filter(Order.id == order.order_id).first()
+    if res:
         query = db.query(Order).filter(Order.id == order.order_id).update({Order.status: order.status})
         print(query)
         db.commit()

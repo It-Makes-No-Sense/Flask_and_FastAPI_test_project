@@ -96,11 +96,11 @@ async def read_order(order_id: int, db: Session = Depends(get_db)):
     return order
 
 
-@app.put("/orders/")
-async def update_order(order: models.OrderUpdate, db: Session = Depends(get_db)):
-    return crud.update_order(db, order)
-
-
 @app.delete("/orders/{order_id}/")
 async def delete_order(order_id: int, db: Session = Depends(get_db)):
     return crud.delete_order(db, order_id)
+
+
+@app.put("/orders/")
+async def update_order(order: models.OrderUpdate, db: Session = Depends(get_db)):
+    return crud.update_order(db, order)
