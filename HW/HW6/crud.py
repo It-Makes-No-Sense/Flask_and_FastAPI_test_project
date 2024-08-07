@@ -1,8 +1,10 @@
 from sqlalchemy.orm import Session
-from models import User, Item, Order, UserCreate, ItemCreate, OrderCreate
+from models import User, Item, Order, UserCreate, ItemCreate, OrderCreate, OrderUpdate
+import bcrypt
 
 
 def create_user(db: Session, user: UserCreate):
+    user.password = bcrypt.hashpw(user.password.encode(), bcrypt.gensalt())
     db_user = User(**user.model_dump())
     db.add(db_user)
     db.commit()
@@ -40,6 +42,10 @@ def get_item(db: Session, item_id: int):
     return db.query(Item).filter(Item.id == item_id).first()
 
 
+def get_items(db: Session):
+    return db.query(Item).all()
+
+
 def delete_item(db: Session, item_id: int):
     item = db.query(Item).filter(Item.id == item_id).first()
     if item:
@@ -62,11 +68,26 @@ def get_order(db: Session, order_id: int):
     return db.query(Order).filter(Order.id == order_id).first()
 
 
+def get_orders(db: Session):
+    return db.query(Order).all()
+
+
 def delete_order(db: Session, order_id: int):
     order = db.query(Order).filter(Order.id == order_id).first()
     if order:
         db.delete(order)
         db.commit()
         return {"message": "Order deleted successfully"}
+    else:
+        return {"error": "Order not found"}
+
+
+def update_order(db: Session, order: OrderUpdate):
+    order = db.query(Order).filter(Order.id == order.order_id).first()
+    if order:
+        query = db.query(Order).filter(Order.id == order.order_id).update({Order.status: order.status})
+        print(query)
+        db.commit()
+        return {"message": "Order Updated successfully"}
     else:
         return {"error": "Order not found"}

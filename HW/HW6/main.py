@@ -59,6 +59,11 @@ async def create_item(item: models.ItemCreate, db: Session = Depends(get_db)):
     return crud.create_item(db, item)
 
 
+@app.get("/items/")
+async def get_items(db: Session = Depends(get_db)):
+    return crud.get_items(db)
+
+
 @app.get("/items/{item_id}/")
 async def read_item(item_id: int, db: Session = Depends(get_db)):
     item = crud.get_item(db, item_id)
@@ -78,12 +83,22 @@ async def create_order(order: models.OrderCreate, db: Session = Depends(get_db))
     return crud.create_order(db, order)
 
 
+@app.get("/orders/")
+async def get_orders(db: Session = Depends(get_db)):
+    return crud.get_orders(db)
+
+
 @app.get("/orders/{order_id}/")
 async def read_order(order_id: int, db: Session = Depends(get_db)):
     order = crud.get_order(db, order_id)
     if order is None:
         raise HTTPException(status_code=404, detail="Order not found")
     return order
+
+
+@app.put("/orders/")
+async def update_order(order: models.OrderUpdate, db: Session = Depends(get_db)):
+    return crud.update_order(db, order)
 
 
 @app.delete("/orders/{order_id}/")

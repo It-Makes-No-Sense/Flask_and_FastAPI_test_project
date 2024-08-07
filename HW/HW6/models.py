@@ -1,7 +1,8 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from database import Base
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
+from datetime import datetime
 
 
 class User(Base):
@@ -29,7 +30,7 @@ class Order(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     item_id = Column(Integer, ForeignKey("items.id"))
-    order_date = Column(DateTime)
+    order_date = Column(DateTime, default=datetime.now())
     status = Column(String)
 
     user = relationship("User", back_populates="orders")
@@ -43,8 +44,8 @@ Item.orders = relationship("Order", back_populates="item")
 class UserCreate(BaseModel):
     first_name: str
     last_name: str
-    email: str
-    password: str
+    email: EmailStr
+    password: bytes
 
 
 class ItemCreate(BaseModel):
@@ -56,4 +57,9 @@ class ItemCreate(BaseModel):
 class OrderCreate(BaseModel):
     user_id: int
     item_id: int
+    status: str
+
+
+class OrderUpdate(BaseModel):
+    order_id: int
     status: str
